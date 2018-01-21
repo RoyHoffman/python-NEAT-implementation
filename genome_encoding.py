@@ -115,7 +115,7 @@ class Genome(object):
     genes = []
 
     def __init__(self,parent1=None,parent2=None):
-        if parent1:
+        if parent2:
             self.mate_init(parent1,parent2)
         else:
             self.default_init()
@@ -176,7 +176,7 @@ class Genome(object):
         ''' optional '''
         Genome.global_existing_nodes = {}
 
-    y = 0
+    #y = 0
     def default_init(self):
         #self.genes = [Gene(Link(inp,out),random_funcs.random_in_range(range))]
         self.hiddens = {} #num to set of nums
@@ -236,7 +236,7 @@ class Genome(object):
         for inp in inns:
             for out in outs:
                 link = Link(inp,out)
-                if inp != out and not self.link_exists(link) and not self.dependent(inp,out):
+                if not self.link_exists(link) and  (globals.RECURRENT_CONNECTIONS or (inp != out and not self.dependent(inp,out))):
                     self.genes.append(Gene(link,random_weight()))
                     return True
         return False
@@ -302,10 +302,10 @@ class Gene(object):
 
 
     def __str__(self):
-        return str(self.link)#+"|"+str(self.weight)
+        return str(self.link)+"|"+str(round(self.weight,4))
 
     def __repr__(self):
-        return str(self.link)#+"|"+str(self.weight)
+        return str(self.link)+"|"+str(round(self.weight,4))
 
 
 

@@ -2,7 +2,7 @@
 from genome_encoding import *
 import globals
 import random_funcs
-import flappy
+#import flappy
 import random
 import neural_net
 
@@ -15,7 +15,7 @@ def sort_children(species,children):
                 break
         else:
             species.append(Species(child))
-
+#what
 def create_first_gen():
     children = []
     for i in xrange(globals.POPULATION_SIZE):

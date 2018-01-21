@@ -12,6 +12,7 @@ MUTATE_LINK_PROB = 0.05
 MUTATE_WEIGHT_PROB = 0.8
 MIN_PARENTS = 3
 
+RECURRENT_CONNECTIONS = True
 START_ALL_LINKS = False
 
 #NEAT controller globals
@@ -23,9 +24,16 @@ speedFPS = 30
 watchFPS = 5000
 FPS = speedFPS
 
+
+
+
+
+'''
 #flappy globals
 FLAP_VALUE = 0.48
 BIAS = 1
 PIPEGAPSIZE = 100 #defult 100
+'''
+
 
 

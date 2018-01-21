@@ -9,25 +9,27 @@ def sigmoid(x):
 class NeuralNet():
 
 
-    current_vals = {}
+    current_vals = {}  #{(node,value)...}
 
     def __init__(self,genome):
         self.inn_nodes = genome.ins
         self.out_nodes = genome.outs
         nodes =  deque(genome.get_hidden_nodes())
-        self.network = []
+        self.network = [] #[(outNode,{(inNode,weight)...})...]
         while nodes:
             node1 = nodes.popleft()
             possible = True
-            for node2 in nodes:
-                if genome.dependent_rec(node2,node1):
-                    possible = False
+            if not globals.RECURRENT_CONNECTIONS:
+                for node2 in nodes:
+                    if genome.dependent_rec(node2,node1):
+                        possible = False
             if possible:
                 self.add_neuron(genome,node1)
             else:
                 nodes.append(node1)
         for node in self.out_nodes:
             self.add_neuron(genome,node)
+        self.reset()
 
     def add_neuron(self,genome,node):
         self.network.append((node,[]))
@@ -37,6 +39,8 @@ class NeuralNet():
                 self.network[-1][1].append((gene.link.inp,gene.weight))
 
     def run(self,*inputs):
+        if not globals.RECURRENT_CONNECTIONS: #not actually needed
+            self.reset()
         for i in xrange(len(self.inn_nodes)):
             self.current_vals[self.inn_nodes[i]]=inputs[i]
         for i in xrange(len(self.network)):
@@ -47,7 +51,12 @@ class NeuralNet():
         outputs = []
         for out_node in self.out_nodes:
             outputs.append(self.current_vals[out_node])
+
         return outputs
+
+    def reset(self):
+        for node in self.network:
+            self.current_vals[node[0]]=0
 
 def test_genome(genome):
     sum = 0
