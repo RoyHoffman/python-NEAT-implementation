@@ -267,6 +267,10 @@ class Genome(object):
                 link = Link(inp,out)
                 if not self.link_exists(link) and (globals.RECURRENT_CONNECTIONS or (inp != out and not self.dependent(inp,out))):
                     self.genes.append(Gene(link,random_weight()))
+                    #'''
+                    if out in self.hiddens.keys():
+                        self.hiddens[out].append(inp)
+                    #'''
                     return True
         return False
 
