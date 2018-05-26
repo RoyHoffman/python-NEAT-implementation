@@ -3,12 +3,11 @@ import random_funcs
 import random
 import globals
 import math
+from copy import deepcopy
 
 
 
 class Species(object):
-
-
 
     genomes = []
     max_fit = 0
@@ -22,16 +21,19 @@ class Species(object):
 
     def add_if_close(self,genome):
         not_matching = 0.0
-        weight_dif = 0.0
+        average_weight_dif = 0.0
+        matching = 0
         for gene1 in genome.genes:
             for gene2 in self.proto.genes:
                 if gene1.inn_num == gene2.inn_num:
-                    weight_dif += abs(gene1.weight - gene2.weight)
+                    average_weight_dif += abs(gene1.weight - gene2.weight)
+                    matching += 1
                     break
             else:
                 not_matching += 1
         not_matching /= max(len(self.proto.genes),len(genome.genes))
-        if globals.MAX_DIST > not_matching*globals.NOT_MATCHING_GENE_COEFFICIENT + weight_dif*globals.WEIGHT_DIF_COEFFICIENT:
+        average_weight_dif /= matching
+        if globals.MAX_DIST > not_matching*globals.NOT_MATCHING_GENE_COEFFICIENT + average_weight_dif*globals.WEIGHT_DIF_COEFFICIENT:
             self.genomes.append(genome)
             return True
         return False
@@ -51,6 +53,7 @@ class Species(object):
             if genome.fit > self.max_fit:
                 self.max_fit=genome.fit
                 self.unimproved = 0
+        #print self.max_fit
         if self.unimproved > globals.MAX_UNIMPROVED:
             return True
         return False
@@ -72,29 +75,37 @@ class Species(object):
         elif self.adjusted_fitness == 0:
             self.num_children = 0
         else:
-            self.num_children = int(math.floor(pop_size*(self.adjusted_fitness/total_adjusted_fitness)))
+            self.num_children = int(math.floor(pop_size*(self.adjusted_fitness/float(total_adjusted_fitness))))
         return self.num_children
 
     def create_children(self):
-        if self.max_fit > 0.9:
-            pass
+        #if self.max_fit > 0.9:
+            #pass
         children = []
-        num_parents = max(int(math.ceil(len(self.genomes)*globals.TOP_PRECENTAGE)),globals.MIN_PARENTS)
+        not_mutated = []
+        num_parents = max(int(math.ceil(len(self.genomes)*globals.PARENT_PERCENT)),globals.MIN_PARENTS)
         self.genomes.sort(key= lambda genome: genome.fit,reverse=True)
         if num_parents < len(self.genomes):
             self.genomes = self.genomes[:num_parents]
-        for i in range(self.num_children-1):
+        if self.num_children >= globals.MIN_CHILDREN_BEFORE_TOP_CARRY:
+            children.append(Genome(self.genomes[0]))
+            self.num_children -= 1
+        bred_children = int(math.floor(self.num_children*globals.BRED_CHILDREN_PRECENT))
+        for i in range(bred_children):
             children.append(Genome(random.choice(self.genomes),(random.choice(self.genomes))).mutate())
-        #children = [Genome(random.choice(self.genomes),(random.choice(self.genomes))).mutate() for i in range(self.num_children-1)]
-        children.append(self.genomes[0])
+        for i in range(self.num_children-bred_children):
+            children.append(Genome(random.choice(self.genomes)).mutate())
+        #children += [Genome(random.choice(self.genomes),(random.choice(self.genomes))).mutate() for i in range(self.num_children-1)]
         return children
+
+    def is_empty(self):
+        return len(self.genomes) == 0
 
     def __str__(self):
         return str([str(genome)+"\n" for genome in self.genomes])+"\n----------------------"
 
     def __repr__(self):
         return str([str(genome)+"\n" for genome in self.genomes])+"\n----------------------"
-
 
 
 
@@ -113,18 +124,32 @@ class Genome(object):
     outs = []
     hiddens = {} #num to set of nums
     genes = []
+    fit = 0
 
     def __init__(self,parent1=None,parent2=None):
-        if parent2:
+        if parent1 and parent2:
             self.mate_init(parent1,parent2)
+        elif parent1:
+            self.copy_init(parent1)
         else:
             self.default_init()
 
 
-    def mate_init(self,parent1=None,parent2=None):
+    def mate_init(self,parent1,parent2):
         #self.genes = [random.choice([g1,g2]) for g1 in parent1.genes for g2 in parent2.genes if g1.inn_num==g2.inn_num]
         """
         """
+        for g in parent1.genes:
+            if g.link.inp != 0 and g.link.inp != 1 and g.link.inp != 2 and g.link.out:
+                pass
+            if g.link.out != 3:
+                pass
+        for g in parent2.genes:
+            if g.link.inp != 0 and g.link.inp != 1 and g.link.inp != 2 and g.link.out:
+                pass
+            if g.link.out != 3:
+                pass
+
         self.hiddens = {} #num to set of nums
         self.genes = []
         if parent1.fit > parent2.fit:
@@ -141,6 +166,10 @@ class Genome(object):
             else:
                 self.genes.append(fit_gene)
         self.hiddens=fit_parent.hiddens
+
+    def copy_init(self,parent):
+        self.genes = deepcopy(parent.genes)
+        self.hiddens = deepcopy(parent.hiddens)
 
     @staticmethod
     def set_ins_and_outs(in_num,out_num):
@@ -176,7 +205,6 @@ class Genome(object):
         ''' optional '''
         Genome.global_existing_nodes = {}
 
-    #y = 0
     def default_init(self):
         #self.genes = [Gene(Link(inp,out),random_funcs.random_in_range(range))]
         self.hiddens = {} #num to set of nums
@@ -189,7 +217,7 @@ class Genome(object):
             self.mutate_link()
 
     def __str__(self):
-        return "<"+str([str(gene) for gene in self.genes])+">\n"
+        return "< n:"+str(len(self.ins)+len(self.outs)+len(self.hiddens))+" "+str([str(gene) for gene in self.genes])+">\n"
 
     def __repr__(self):
         return "<"+str([str(gene) for gene in self.genes])+">\n"
@@ -207,7 +235,8 @@ class Genome(object):
         if split_link.out in self.hiddens.keys():
             self.hiddens[split_link.out].append(node_num)
         self.genes.append(Gene(Link(split_link.inp,node_num),1))
-        self.genes.append(Gene(Link(node_num,split_link.out),1))
+        self.genes.append(Gene(Link(node_num,split_link.out),split_gene.weight))
+        pass
 
     def all_links(self):
         return [gene.link for gene in self.genes]
@@ -236,7 +265,7 @@ class Genome(object):
         for inp in inns:
             for out in outs:
                 link = Link(inp,out)
-                if not self.link_exists(link) and  (globals.RECURRENT_CONNECTIONS or (inp != out and not self.dependent(inp,out))):
+                if not self.link_exists(link) and (globals.RECURRENT_CONNECTIONS or (inp != out and not self.dependent(inp,out))):
                     self.genes.append(Gene(link,random_weight()))
                     return True
         return False
@@ -291,21 +320,23 @@ class Gene(object):
         #maybe add mutations
     def mutate_weight(self):
         """
-
         :type self: object
         """
         if random_funcs.prob_of_event(globals.WEIGHT_OVERWRITE_MUTATION):
             self.weight = random_weight()
+        if self.weight> 5 or self.weight < -5:
+            pass
         else:
             i = random.choice([-1, 1])
-            self.weight += self.weight*globals.WEIGHT_MUTATION_COEFFICIENT*i
+            self.weight += round(self.weight*globals.WEIGHT_MUTATION_COEFFICIENT*i,globals.MAX_DECIMAL_PRECISION)
+
 
 
     def __str__(self):
-        return str(self.link)+"|"+str(round(self.weight,4))
+        return str(self.link)+"|"+str(round(self.weight,3))+('a'if self.expressed else 'n')
 
     def __repr__(self):
-        return str(self.link)+"|"+str(round(self.weight,4))
+        return str(self.link)+"|"+str(round(self.weight,3))+('a'if self.expressed else 'n')
 
 
 

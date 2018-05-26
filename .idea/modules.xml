@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://C:/Heights/Documents/Projects/learn pygame/.idea/learn pygame.iml" filepath="C:/Heights/Documents/Projects/learn pygame/.idea/learn pygame.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/python-NEAT-implementation.iml" filepath="$PROJECT_DIR$/.idea/python-NEAT-implementation.iml" />
     </modules>
   </component>
