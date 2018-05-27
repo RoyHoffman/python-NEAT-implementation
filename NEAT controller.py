@@ -6,6 +6,7 @@ import random_funcs
 import random
 import neural_net
 from copy import copy
+import nerual_net_visualizer
 
 import warnings
 
@@ -35,6 +36,7 @@ def test_all(species):
 def debug_fit_test(genome):
     if genome.fit >= globals.FIT_CHECK:
         print str(genome.fit) + " did it" + str(genome)
+        nerual_net_visualizer.visualize_genome(genome)
         if raw_input() == "q":
             globals.FIT_CHECK += globals.FIT_INC
 
@@ -77,6 +79,9 @@ def main():
     species = []
     children = create_first_gen()
     print children
+
+    nerual_net_visualizer.visualize_genome(children[0])
+
     max_fit = 0
     while(True):
         genc += 1
